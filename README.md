@@ -1,67 +1,90 @@
-#!/bin/bash
-# ==========================================
-# AWS IAM ACCOUNT SETUP — DevOpsAdmin Script
-# ==========================================
+# 🚀 AWS IAM Account Setup (Terraform-Style Bash Project)
 
-# Exit on error
-set -e
+This project automates the creation of a **new IAM user with admin privileges** from your AWS root or IAM account.  
+It follows a **Terraform-like modular structure** to keep things clean and maintainable.
 
-# Variables (edit these before running)
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-GROUP_NAME="Admins"
-POLICY_NAME="FullAdminAccess"
-USER_NAME="DevOpsAdmin"
-LOGIN_PASSWORD="StrongPassword#2025"
+---
 
-echo "=== Creating IAM group: $GROUP_NAME ==="
-aws iam create-group --group-name $GROUP_NAME || echo "Group already exists"
+## 📁 Folder Structure
 
-echo "=== Creating IAM admin policy ==="
-cat > AdminPolicy.json <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "*",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
+```
+IAM-Account/
+├── main.sh                  # Entry point script that sources all modules
+├── README.md                # Documentation file (this one)
+└── modules/
+    └── iam/
+        ├── main.sh          # Creates IAM user, group, and attaches policy
+        ├── variables.sh     # Holds variables (username, group, etc.)
+        └── outputs.sh       # Displays output info like access keys
+```
 
-aws iam create-policy \
-  --policy-name $POLICY_NAME \
-  --policy-document file://AdminPolicy.json || echo "Policy already exists"
+---
 
-echo "=== Attaching policy to group ==="
-aws iam attach-group-policy \
-  --group-name $GROUP_NAME \
-  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME
+## ⚙️ What This Script Does
 
-echo "=== Creating user: $USER_NAME ==="
-aws iam create-user --user-name $USER_NAME || echo "User already exists"
+- ✅ Creates an IAM **group** (e.g., `DevOpsAdmins`)
+- ✅ Attaches **AdministratorAccess** policy to the group
+- ✅ Creates a **user** (e.g., John) and adds him to that group
+- ✅ Generates and displays **access keys** for the user
 
-echo "=== Adding user to group ==="
-aws iam add-user-to-group \
-  --user-name $USER_NAME \
-  --group-name $GROUP_NAME
+---
 
-echo "=== Creating console password ==="
-aws iam create-login-profile \
-  --user-name $USER_NAME \
-  --password "$LOGIN_PASSWORD" \
-  --password-reset-required || echo "Login profile already exists"
+## 🧩 How Each File Works
 
-echo "=== Generating access keys for CLI ==="
-aws iam create-access-key --user-name $USER_NAME > AccessKeys.json || echo "Access keys already exist"
+| File | Purpose |
+|------|----------|
+| `main.sh` | The entry point; sources and executes module scripts |
+| `modules/iam/main.sh` | Contains AWS CLI commands for creating resources |
+| `modules/iam/variables.sh` | Stores variable definitions |
+| `modules/iam/outputs.sh` | Prints final results and credentials |
 
-echo "=== Setup Complete ==="
-echo "--------------------------------------"
-echo "User: $USER_NAME"
-echo "Group: $GROUP_NAME"
-echo "Policy: $POLICY_NAME"
-echo "Account ID: $ACCOUNT_ID"
-echo "--------------------------------------"
-echo "Access Keys saved to AccessKeys.json"
-echo "Login password: $LOGIN_PASSWORD"
+---
+
+## 🚀 How to Run
+
+> ⚠️ Make sure your AWS CLI is configured with credentials that can create IAM resources.
+
+```bash
+# Step 1: Clone the repository
+git clone https://github.com/GeigerJR/IAM-Account.git
+cd IAM-Account
+
+# Step 2: Make scripts executable
+chmod +x main.sh modules/iam/*.sh
+
+# Step 3: Run the main script
+./main.sh
+```
+
+---
+
+## 🧠 Example Output
+
+```
+✅ Created IAM group: DevOpsAdmins
+✅ Attached policy: AdministratorAccess
+✅ Created IAM user: John
+✅ Added user John to group DevOpsAdmins
+✅ Access Key: AKIAIOSFODNN7EXAMPLE
+✅ Secret Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
+---
+
+## 🧹 Cleanup Commands (Optional)
+
+To delete everything created:
+
+```bash
+aws iam remove-user-from-group --user-name John --group-name DevOpsAdmins
+aws iam delete-user --user-name John
+aws iam delete-group --group-name DevOpsAdmins
+```
+
+---
+
+## 👤 Author
+
+**Phillip GeigerJR**  
+DevOps Engineer | AWS & Terraform Automation  
+GitHub: [GeigerJR](https://github.com/GeigerJR)
