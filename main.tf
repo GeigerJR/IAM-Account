@@ -17,7 +17,6 @@ resource "aws_iam_user" "example" {
   name = "phillip-test-user"
 }
 
-# Root main.tf
 
 # Call the IAM user module
 module "john_iam_user" {
