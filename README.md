@@ -68,23 +68,3 @@ chmod +x main.sh modules/iam/*.sh
 ✅ Access Key: AKIAIOSFODNN7EXAMPLE
 ✅ Secret Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
-
----
-
-## 🧹 Cleanup Commands (Optional)
-
-To delete everything created:
-
-```bash
-aws iam remove-user-from-group --user-name John --group-name DevOpsAdmins
-aws iam delete-user --user-name John
-aws iam delete-group --group-name DevOpsAdmins
-```
-
----
-
-## 👤 Author
-
-**Phillip GeigerJR**  
-DevOps Engineer | AWS & Terraform Automation  
-GitHub: [GeigerJR](https://github.com/GeigerJR)
