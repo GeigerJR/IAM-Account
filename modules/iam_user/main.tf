@@ -1,29 +1,39 @@
-# Create IAM User
-resource "aws_iam_user" "this" {
-  name = var.user_name
+resource "aws_iam_user" "user" {
+  for_each = toset(var.user_names)
+  name     = each.value
+  force_destroy = true
   tags = {
-    ManagedBy = "Terraform"
+    CreatedBy = "Terraform"
+    Role      = "DevOps Engineer"
   }
 }
 
-# Create IAM Group for Admins
-resource "aws_iam_group" "admins" {
-  name = "AdminGroup"
+resource "random_password" "temp_password" {
+  for_each = toset(var.user_names)
+  length           = 16
+  special          = true
+  override_characters = "!@#$%^&*()-_=+"
 }
 
-# Attach the AdministratorAccess policy to the group
-resource "aws_iam_group_policy_attachment" "admin_policy" {
-  group      = aws_iam_group.admins.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_user_login_profile" "login_profile" {
+  for_each = toset(var.user_names)
+  user                    = aws_iam_user.user[each.key].name
+  password                = random_password.temp_password[each.key].result
+  password_reset_required = true
 }
 
-# Add the user to the Admin group
-resource "aws_iam_user_group_membership" "membership" {
-  user   = aws_iam_user.this.name
-  groups = [aws_iam_group.admins.name]
+resource "aws_iam_user_policy_attachment" "admin_policy" {
+  for_each   = toset(var.user_names)
+  user       = aws_iam_user.user[each.key].name
+  policy_arn = var.admin_policy_arn
 }
 
-# Optional: Create an access key for CLI/SDK usage
-resource "aws_iam_access_key" "user_key" {
-  user = aws_iam_user.this.name
+resource "aws_ssm_parameter" "user_temp_password" {
+  for_each = toset(var.user_names)
+  name     = "/iam/${each.value}/temp_password"
+  type     = "SecureString"
+  value    = random_password.temp_password[each.key].result
+  tags = {
+    CreatedBy = "Terraform"
+  }
 }

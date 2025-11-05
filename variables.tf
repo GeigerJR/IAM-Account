@@ -1,17 +1,17 @@
-variable "aws_region" {
-  description = "The AWS region to deploy resources in"
+variable "region" {
+  description = "AWS region where resources will be created"
   type        = string
   default     = "us-east-1"
-}
-
-variable "aws_profile" {
-  description = "The AWS CLI profile name to use"
-  type        = string
-  default     = "default"
 }
 
 variable "user_name" {
   description = "The name of the IAM user to create"
   type        = string
-  default     = "John-Admin"
+  default     = "john"
+}
+
+variable "admin_policy_arn" {
+  description = "The IAM policy ARN to attach (default is AdministratorAccess)"
+  type        = string
+  default     = "arn:aws:iam::aws:policy/AdministratorAccess"
 }

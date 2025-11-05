@@ -3,14 +3,7 @@ output "john_iam_user_name" {
   value       = module.john_iam_user.user_name
 }
 
-output "john_access_key_id" {
-  description = "Access key ID for John"
-  value       = module.john_iam_user.access_key_id
-  sensitive   = true
-}
-
-output "john_secret_access_key" {
-  description = "Secret access key for John"
-  value       = module.john_iam_user.secret_access_key
-  sensitive   = true
+output "john_temp_password_ssm_path" {
+  description = "The SSM path where the temporary password is stored"
+  value       = "/iam/${var.user_name}/temp_password"
 }

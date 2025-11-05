@@ -18,8 +18,9 @@ resource "aws_iam_user" "example" {
 }
 
 
-# Call the IAM user module
-module "john_iam_user" {
-  source    = "./modules/iam_user"
-  user_name = var.user_name
+module "iam_users" {
+  source = "./modules/iam_user"
+
+  user_names = ["John", "Mary", "David"]
+  admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
