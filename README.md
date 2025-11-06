@@ -2,6 +2,17 @@
 
 Terraform project for managing IAM users with group-based permissions across dev/prod environments.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Structure](#structure)
+- [Result](#result)
+- [Usage](#usage)
+  - [Configure Users](#configure-users)
+  - [Deploy](#deploy)
+
+---
+
 ## Quick Start
 
 ```bash
@@ -20,6 +31,8 @@ aws ssm get-parameter --name "/iam/John-Dev/temp_password" --with-decryption --q
 # Note: Console access must be enabled manually via AWS CLI or Console
 ```
 
+[↑ Back to top](#table-of-contents)
+
 ## Structure
 
 ```
@@ -28,6 +41,8 @@ modules/iam_user/ # IAM user module (see modules/iam_user/README.md)
 deployments/dev/  # Dev environment
 deployments/prod/ # Prod environment
 ```
+
+[↑ Back to top](#table-of-contents)
 
 ## Result
 
@@ -38,6 +53,8 @@ After deployment, you'll have IAM users created across environments:
 Passwords are securely stored in AWS Systems Manager Parameter Store:
 
 ![SSM Parameters](docs/images/ssm-parameters.png)
+
+[↑ Back to top](#table-of-contents)
 
 ## Usage
 
@@ -73,3 +90,5 @@ terraform apply
 cd deployments/prod
 terraform apply
 ```
+
+[↑ Back to top](#table-of-contents)
