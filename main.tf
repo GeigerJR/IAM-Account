@@ -13,14 +13,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_iam_user" "example" {
-  name = "phillip-test-user"
-}
-
-
 module "iam_users" {
   source = "./modules/iam_user"
 
-  user_names = ["John", "Mary", "David"]
+  user_names       = ["John", "Mary", "David"]
   admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
