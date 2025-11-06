@@ -13,6 +13,11 @@ output "user_groups" {
   value       = local.user_groups
 }
 
+output "user_roles" {
+  description = "Map of users to their roles"
+  value       = local.user_roles
+}
+
 output "user_temp_passwords" {
   description = "Temporary passwords for users"
   value       = { for k, v in random_password.temp_password : k => v.result }

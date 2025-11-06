@@ -1,9 +1,10 @@
 # Variables are provided via config/<env>/terraform.tfvars
 
 variable "groups" {
-  description = "Map of IAM groups with their policies and users"
+  description = "Map of IAM groups with their policies, roles, and users"
   type = map(object({
     policy_arn = string
+    role       = string
     users      = list(string)
   }))
 }

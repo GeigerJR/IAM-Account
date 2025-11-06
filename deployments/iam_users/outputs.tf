@@ -13,6 +13,11 @@ output "iam_user_groups" {
   value       = module.iam_users.user_groups
 }
 
+output "iam_user_roles" {
+  description = "Map of users to their roles"
+  value       = module.iam_users.user_roles
+}
+
 output "iam_user_temp_passwords" {
   description = "Temporary passwords for all created users (retrieve from SSM Parameter Store)"
   value       = module.iam_users.user_temp_passwords

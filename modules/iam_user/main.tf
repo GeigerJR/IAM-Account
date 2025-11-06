@@ -9,6 +9,14 @@ locals {
       if contains(config.users, user)
     ]
   }
+
+  # Create a map of user to their roles (derived from their groups)
+  user_roles = {
+    for user in local.all_users : user => [
+      for group_name, config in var.groups : config.role
+      if contains(config.users, user)
+    ]
+  }
 }
 
 # Create IAM Groups
@@ -31,7 +39,7 @@ resource "aws_iam_user" "user" {
   force_destroy = true
   tags = {
     CreatedBy = "Terraform"
-    Role      = "DevOps Engineer"
+    Role      = join(", ", local.user_roles[each.value])
     Groups    = join(", ", local.user_groups[each.value])
   }
 }
@@ -67,6 +75,7 @@ resource "aws_ssm_parameter" "user_temp_password" {
   value    = random_password.temp_password[each.key].result
   tags = {
     CreatedBy = "Terraform"
+    Role      = join(", ", local.user_roles[each.value])
     Groups    = join(", ", local.user_groups[each.value])
   }
 }
