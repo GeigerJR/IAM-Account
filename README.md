@@ -29,6 +29,16 @@ deployments/dev/  # Dev environment
 deployments/prod/ # Prod environment
 ```
 
+## Result
+
+After deployment, you'll have IAM users created across environments:
+
+![IAM Users](docs/images/iam-users.png)
+
+Passwords are securely stored in AWS Systems Manager Parameter Store:
+
+![SSM Parameters](docs/images/ssm-parameters.png)
+
 ## Usage
 
 ### Configure Users
