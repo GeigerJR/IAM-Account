@@ -51,13 +51,6 @@ resource "random_password" "temp_password" {
   override_special = "!@#$%^&*()-_=+"
 }
 
-resource "aws_iam_user_login_profile" "login_profile" {
-  for_each                = local.all_users
-  user                    = aws_iam_user.user[each.key].name
-  password                = random_password.temp_password[each.key].result
-  password_reset_required = true
-}
-
 resource "aws_ssm_parameter" "user_temp_password" {
   for_each = local.all_users
   name     = "/iam/${each.value}/temp_password"
