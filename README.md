@@ -1,82 +1,37 @@
-# AWS IAM User Management with Terraform
+# IAM Account
 
-Automated IAM user creation with multi-environment support.
+Terraform project for managing IAM users with group-based permissions across dev/prod environments.
 
-## Project Structure
-
-```
-IAM-Account/
-├── backend/              # S3 bucket + DynamoDB table (run once)
-├── modules/iam_user/     # Reusable IAM user module
-├── deployments/iam_users/ # IAM deployment orchestration
-└── config/               # Environment-specific configs
-    ├── dev/
-    ├── staging/
-    └── prod/
-```
-
-## Setup
-
-### 1. Bootstrap Backend (One-Time)
+## Quick Start
 
 ```bash
-cd backend/
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your bucket name
+# 1. Setup backend (once)
+cd backend && terraform init && terraform apply && cd ..
+
+# 2. Deploy IAM users to dev
+cd deployments/dev
+export AWS_PROFILE=dev-admin
 terraform init
 terraform apply
-cd ..
+
+# 3. Get user passwords
+aws ssm get-parameter --name "/iam/dev/John-Dev/temp_password" --with-decryption --query "Parameter.Value" --output text
 ```
 
-### 2. Deploy to Environment
+## Structure
 
-```bash
-cd deployments/iam_users/
-
-# Initialize with environment backend
-terraform init -backend-config=../../config/dev/backend.hcl
-
-# Apply changes
-terraform apply -var-file=../../config/dev/terraform.tfvars
+```
+backend/          # S3 + DynamoDB (see backend/README.md)
+modules/iam_user/ # IAM user module (see modules/iam_user/README.md)
+deployments/dev/  # Dev environment
+deployments/prod/ # Prod environment
 ```
 
-### 3. Retrieve Passwords
+## Usage
 
-```bash
-# View outputs
-terraform output iam_user_names
+### Configure Users
 
-# Get password from SSM
-aws ssm get-parameter \
-  --name "/iam/dev/John-Dev/temp_password" \
-  --with-decryption \
-  --query "Parameter.Value" \
-  --output text
-```
-
-## Environment Management
-
-Switch environments by changing backend and tfvars:
-
-```bash
-cd deployments/iam_users/
-
-# Dev
-terraform init -backend-config=../../config/dev/backend.hcl
-terraform apply -var-file=../../config/dev/terraform.tfvars
-
-# Staging
-terraform init -backend-config=../../config/staging/backend.hcl -reconfigure
-terraform apply -var-file=../../config/staging/terraform.tfvars
-
-# Prod
-terraform init -backend-config=../../config/prod/backend.hcl -reconfigure
-terraform apply -var-file=../../config/prod/terraform.tfvars
-```
-
-## Configuration
-
-Edit `config/<env>/terraform.tfvars`:
+Edit `deployments/dev/terraform.tfvars`:
 
 ```hcl
 environment = "dev"
@@ -95,18 +50,14 @@ groups = {
 }
 ```
 
-## What Gets Created
+### Deploy
 
-- IAM users with login profiles
-- IAM groups with policy attachments
-- Random 16-character passwords
-- SSM parameters (encrypted)
-- Account password policy
+```bash
+# Dev
+cd deployments/dev
+terraform apply
 
-## Security Features
-
-- S3 state encryption and versioning
-- DynamoDB state locking
-- SSM SecureString for passwords
-- Forced password reset on first login
-- Public access block on S3
+# Prod
+cd deployments/prod
+terraform apply
+```
