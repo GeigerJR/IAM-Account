@@ -30,9 +30,9 @@ resource "aws_iam_user_group_membership" "group_membership" {
 
 # Generate random passwords for each user
 resource "random_password" "temp_password" {
-  for_each        = toset(var.user_names)
-  length          = 16
-  special         = true
+  for_each         = toset(var.user_names)
+  length           = 16
+  special          = true
   override_special = "!@#$%^&*()-_=+"
 }
 
