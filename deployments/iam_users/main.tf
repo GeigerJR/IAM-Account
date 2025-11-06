@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 module "iam_users" {
-  source = "../modules/iam_user"
+  source = "../../modules/iam_user"
 
   groups = var.groups
 }

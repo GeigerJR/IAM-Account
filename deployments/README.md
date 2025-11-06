@@ -1,110 +1,166 @@
 # Deployments
 
-This directory contains the deployment code that orchestrates the infrastructure.
+This directory contains different deployment configurations. Each deployment is a separate use case or infrastructure component.
 
 ## 📁 Structure
 
 ```
 deployments/
-├── main.tf              # Calls iam_user module with config values
-├── variables.tf         # Accepts values from ../config/
-├── outputs.tf           # Exposes user info and passwords
-├── backend.tf           # S3 backend configuration
-├── password_policy.tf   # AWS account password policy
-└── providers.tf         # AWS provider setup
+├── iam_users/           # IAM user and group management
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── backend.tf
+│   ├── password_policy.tf
+│   └── providers.tf
+│
+└── (future deployments)
+    ├── iam_roles/       # IAM roles for services
+    ├── s3_buckets/      # S3 bucket management
+    ├── vpc/             # VPC infrastructure
+    └── ...
 ```
 
-## 🎯 Flow
+## 🎯 Current Deployments
 
+### **iam_users/**
+Manages IAM users and groups with flexible policy assignments.
+
+**Purpose**: Create and manage IAM users across multiple groups with different permissions.
+
+**Usage**:
+```bash
+cd deployments/iam_users/
+
+# Initialize
+terraform init -backend-config=../../config/dev/backend.hcl
+
+# Deploy
+terraform apply -var-file=../../config/dev/terraform.tfvars
 ```
-../config/<env>/terraform.tfvars  (user_names = ["John-Dev", ...])
-              ↓
-        variables.tf              (accepts the list)
-              ↓
-        main.tf                   (passes to module)
-              ↓
-    ../modules/iam_user           (for_each creates each user)
-```
 
-## 🚀 Usage
+**Features**:
+- Multiple groups with different policies
+- Users can belong to multiple groups
+- Automatic password generation and SSM storage
+- Account-wide password policy
 
-All commands are run from **this directory** (`deployments/`).
+---
 
-### Deploy to DEV
+## 🚀 Adding New Deployments
+
+To add a new deployment type:
 
 ```bash
-cd deployments/
+# Create new deployment directory
+mkdir -p deployments/my_deployment
 
-# Initialize with dev backend
-terraform init -backend-config=../config/dev/backend.hcl
-
-# Plan changes for dev
-terraform plan -var-file=../config/dev/terraform.tfvars
-
-# Apply changes for dev
-terraform apply -var-file=../config/dev/terraform.tfvars
+# Create basic structure
+cd deployments/my_deployment
+touch main.tf variables.tf outputs.tf backend.tf providers.tf README.md
 ```
 
-### Deploy to STAGING
+**Template `main.tf`:**
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  required_version = ">= 1.3.0"
+}
 
-```bash
-cd deployments/
+provider "aws" {
+  region = "us-east-1"
+}
 
-# Switch to staging backend
-terraform init -backend-config=../config/staging/backend.hcl -reconfigure
-
-# Plan and apply for staging
-terraform plan -var-file=../config/staging/terraform.tfvars
-terraform apply -var-file=../config/staging/terraform.tfvars
+module "my_module" {
+  source = "../../modules/my_module"
+  
+  # Variables from config
+}
 ```
 
-### Deploy to PROD
-
-```bash
-cd deployments/
-
-# Switch to prod backend
-terraform init -backend-config=../config/prod/backend.hcl -reconfigure
-
-# Plan and apply for prod
-terraform plan -var-file=../config/prod/terraform.tfvars
-terraform apply -var-file=../config/prod/terraform.tfvars
+**Template `backend.tf`:**
+```hcl
+terraform {
+  # Backend config provided via: -backend-config=../../config/<env>/backend.hcl
+  backend "s3" {}
+}
 ```
 
-## 💡 Using Environment Variable
+---
+
+## 📋 Deployment Workflow
+
+Each deployment follows the same pattern:
 
 ```bash
-cd deployments/
+# 1. Navigate to deployment
+cd deployments/<deployment-name>/
 
-# Set your target environment
+# 2. Set environment
 export ENV=dev
 
-# Use in commands
-terraform init -backend-config=../config/$ENV/backend.hcl
-terraform plan -var-file=../config/$ENV/terraform.tfvars
-terraform apply -var-file=../config/$ENV/terraform.tfvars
+# 3. Initialize with backend config
+terraform init -backend-config=../../config/$ENV/backend.hcl
+
+# 4. Plan with environment config
+terraform plan -var-file=../../config/$ENV/terraform.tfvars
+
+# 5. Apply
+terraform apply -var-file=../../config/$ENV/terraform.tfvars
 ```
 
-## 📝 What Each File Does
+---
 
-| File | Purpose |
-|------|---------|
-| `main.tf` | Calls the `iam_user` module from `../modules/iam_user` |
-| `variables.tf` | Defines variables that config provides (user_names, policies) |
-| `outputs.tf` | Exposes outputs from the module (users, passwords, SSM paths) |
-| `backend.tf` | Configures S3 backend (partial - needs backend-config flag) |
-| `password_policy.tf` | Sets AWS account-wide password policy |
-| `providers.tf` | Configures AWS provider |
+## 🔄 Multiple Deployments
 
-## 🔄 Workflow
+You can run multiple deployments in the same environment:
 
-1. **Choose environment**: `export ENV=dev`
-2. **Initialize**: Point to the environment's backend config
-3. **Plan**: Review what will be created using environment's variables
-4. **Apply**: Deploy the infrastructure for that environment
+```
+s3://project-terraform-state/
+├── iam-users/
+│   ├── dev/terraform.tfstate
+│   ├── staging/terraform.tfstate
+│   └── prod/terraform.tfstate
+├── iam-roles/
+│   └── dev/terraform.tfstate
+└── s3-buckets/
+    └── prod/terraform.tfstate
+```
 
-Each environment is completely isolated with:
-- Separate state files in S3
-- Separate user lists
-- Same infrastructure code (DRY principle)
+Each deployment has its own state file, enabling independent management.
+
+---
+
+## 💡 Benefits of This Structure
+
+✅ **Separation of Concerns**: Each deployment is independent
+✅ **Scalable**: Easy to add new deployment types
+✅ **Isolated State**: Changes in one deployment don't affect others
+✅ **Reusable Modules**: Modules can be shared across deployments
+✅ **Clear Organization**: Easy to find and manage specific infrastructure
+
+---
+
+## 📝 Example: Multiple Deployments
+
+```bash
+# Deploy IAM users
+cd deployments/iam_users/
+terraform apply -var-file=../../config/dev/terraform.tfvars
+
+# Deploy VPC (future)
+cd deployments/vpc/
+terraform apply -var-file=../../config/dev/terraform.tfvars
+
+# Deploy S3 buckets (future)
+cd deployments/s3_buckets/
+terraform apply -var-file=../../config/dev/terraform.tfvars
+```
+
+Each deployment is independent but can reference outputs from others if needed!
 
