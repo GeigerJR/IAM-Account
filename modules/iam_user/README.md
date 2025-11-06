@@ -2,6 +2,15 @@
 
 Creates IAM users, groups, and manages group membership with policies.
 
+## Table of Contents
+
+- [Usage](#usage)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [What It Creates](#what-it-creates)
+
+---
+
 ## Usage
 
 ```hcl
@@ -23,11 +32,15 @@ module "iam_users" {
 }
 ```
 
+[↑ Back to top](#table-of-contents)
+
 ## Inputs
 
 | Name | Description | Type | Required |
 |------|-------------|------|----------|
 | `groups` | Map of IAM groups with policies, roles, and users | `map(object({ policy_arn = string, role = string, users = list(string) }))` | Yes |
+
+[↑ Back to top](#table-of-contents)
 
 ## Outputs
 
@@ -38,6 +51,8 @@ module "iam_users" {
 | `user_groups` | Map of users to their assigned groups |
 | `user_roles` | Map of users to their roles |
 
+[↑ Back to top](#table-of-contents)
+
 ## What It Creates
 
 - IAM users with login profiles
@@ -46,4 +61,6 @@ module "iam_users" {
 - Group memberships
 - Random passwords (16 chars)
 - SSM parameters for passwords (`/iam/<env>/<user>/temp_password`)
+
+[↑ Back to top](#table-of-contents)
 
