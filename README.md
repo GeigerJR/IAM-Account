@@ -1,6 +1,6 @@
 # 🚀 AWS IAM User Management with Terraform
 
-This project automates the creation of **multiple IAM users with admin privileges** using Terraform. It includes a modular structure, remote state management with S3, and security best practices.
+Automated IAM user creation with multi-environment support, using a clean modular structure.
 
 ---
 
@@ -8,68 +8,70 @@ This project automates the creation of **multiple IAM users with admin privilege
 
 ```
 IAM-Account/
-├── backend/                    # Bootstrap infrastructure for remote state
-│   ├── main.tf                # S3 bucket and DynamoDB table
-│   ├── variables.tf           # Backend configuration variables
-│   ├── outputs.tf             # Backend resource outputs
-│   ├── README.md              # Detailed backend setup instructions
-│   └── terraform.tfvars.example
-├── modules/
-│   └── iam_user/              # Reusable IAM user module
-│       ├── main.tf            # User creation with passwords
-│       ├── variables.tf       # Module inputs
-│       ├── outputs.tf         # Module outputs
-│       └── versions.tf        # Provider requirements
-├── main.tf                    # Root module - creates IAM users
-├── backend.tf                 # S3 backend configuration
-├── outputs.tf                 # Root outputs (user names, passwords)
-├── password_policy.tf         # AWS account password policy
-└── README.md                  # This file
+├── backend/              # Bootstrap infrastructure (run once)
+│   ├── main.tf          # Creates S3 bucket + DynamoDB table
+│   ├── variables.tf
+│   └── outputs.tf
+│
+├── modules/              # Reusable Terraform modules
+│   └── iam_user/        # IAM user creation module
+│       ├── main.tf      # Handles multiple users with for_each
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── versions.tf
+│
+├── deployments/          # Deployment orchestration
+│   ├── main.tf          # Calls iam_user module
+│   ├── variables.tf     # Accepts config values
+│   ├── outputs.tf       # Exposes results
+│   ├── backend.tf       # S3 backend config
+│   ├── password_policy.tf
+│   └── providers.tf
+│
+└── config/               # Environment-specific configurations
+    ├── dev/
+    │   ├── backend.hcl   # Dev state location
+    │   └── terraform.tfvars  # Dev users: John-Dev, Mary-Dev
+    ├── staging/
+    │   ├── backend.hcl
+    │   └── terraform.tfvars  # Staging users
+    └── prod/
+        ├── backend.hcl
+        └── terraform.tfvars  # Prod users
 ```
 
 ---
 
-## ⚙️ What This Project Does
+## 🎯 Architecture Flow
 
-### Creates IAM Users
-- ✅ Multiple IAM users in one run (John, Mary, David)
-- ✅ Generates secure random passwords (16 characters)
-- ✅ Stores passwords securely in AWS SSM Parameter Store
-- ✅ Requires password reset on first login
-- ✅ Attaches AdministratorAccess policy to each user
-
-### Enforces Password Policy
-- ✅ Minimum 14 characters
-- ✅ Requires uppercase, lowercase, numbers, and symbols
-- ✅ Prevents password reuse (last 5 passwords)
-- ✅ Maximum password age: 90 days
-
-### Remote State Management
-- ✅ S3 bucket for state storage with versioning
-- ✅ DynamoDB table for state locking
-- ✅ Encryption enabled
-- ✅ Folder-based state organization
+```
+config/dev/terraform.tfvars
+    user_names = ["John-Dev", "Mary-Dev", "David-Dev"]
+              ↓
+    deployments/variables.tf
+    (accepts the list)
+              ↓
+    deployments/main.tf
+    (passes to module)
+              ↓
+    modules/iam_user
+    (for_each creates each user)
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- AWS CLI configured with appropriate credentials
-- Terraform >= 1.3.0 installed
-- AWS account with permissions to create IAM resources
-
-### Step 1: Create Backend Infrastructure (One-Time Setup)
+### Step 1: Bootstrap Backend Infrastructure (One-Time)
 
 ```bash
 cd backend/
 
-# Configure your backend settings
+# Configure backend settings
 cp terraform.tfvars.example terraform.tfvars
-vim terraform.tfvars  # Update with your unique bucket name
+vim terraform.tfvars  # Set your unique bucket name
 
-# Create the S3 bucket and DynamoDB table
+# Create S3 + DynamoDB
 terraform init
 terraform apply
 
@@ -81,152 +83,189 @@ cd ..
 
 See `backend/README.md` for detailed instructions.
 
-### Step 2: Configure Backend
+### Step 2: Deploy to an Environment
 
-Edit `backend.tf` to match your backend resources:
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "your-bucket-name"  # From backend output
-    key            = "iam-account/dev/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "your-table-name"   # From backend output
-    encrypt        = true
-  }
-}
-```
-
-### Step 3: Customize Users (Optional)
-
-Edit `main.tf` to add/remove users:
-
-```hcl
-module "iam_users" {
-  source = "./modules/iam_user"
-
-  user_names       = ["John", "Mary", "David"]  # Modify this list
-  admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-```
-
-### Step 4: Deploy IAM Users
+All deployments run from the `deployments/` directory:
 
 ```bash
-# Initialize Terraform (with S3 backend)
-terraform init
+cd deployments/
 
-# Review the execution plan
-terraform plan
+# Set target environment
+export ENV=dev
 
-# Apply the configuration
-terraform apply
+# Initialize with environment backend
+terraform init -backend-config=../config/$ENV/backend.hcl
+
+# Plan changes
+terraform plan -var-file=../config/$ENV/terraform.tfvars
+
+# Apply changes
+terraform apply -var-file=../config/$ENV/terraform.tfvars
 ```
 
-### Step 5: Retrieve Passwords
+### Step 3: Retrieve User Passwords
 
 ```bash
-# Get user names
+cd deployments/
+
+# View all user names
 terraform output iam_user_names
 
-# Get SSM paths where passwords are stored
+# View SSM parameter paths
 terraform output ssm_parameter_paths
 
-# Retrieve a password from SSM Parameter Store
+# Get a specific user's password from SSM
 aws ssm get-parameter \
-  --name "/iam/John/temp_password" \
+  --name "/iam/John-Dev/temp_password" \
   --with-decryption \
   --query "Parameter.Value" \
   --output text
 ```
 
-Or view sensitive outputs directly:
+---
 
+## 🌍 Environment Management
+
+### Deploy to Different Environments
+
+**Dev:**
 ```bash
-terraform output -json iam_user_temp_passwords
+cd deployments/
+terraform init -backend-config=../config/dev/backend.hcl
+terraform apply -var-file=../config/dev/terraform.tfvars
 ```
+
+**Staging:**
+```bash
+cd deployments/
+terraform init -backend-config=../config/staging/backend.hcl -reconfigure
+terraform apply -var-file=../config/staging/terraform.tfvars
+```
+
+**Prod:**
+```bash
+cd deployments/
+terraform init -backend-config=../config/prod/backend.hcl -reconfigure
+terraform apply -var-file=../config/prod/terraform.tfvars
+```
+
+### Environment Isolation
+
+Each environment is **completely isolated**:
+
+| Environment | Users | State Location |
+|------------|-------|----------------|
+| **dev** | John-Dev, Mary-Dev, David-Dev | `s3://.../iam-account/dev/terraform.tfstate` |
+| **staging** | John-Staging, Mary-Staging, David-Staging | `s3://.../iam-account/staging/terraform.tfstate` |
+| **prod** | John-Prod, Mary-Prod, David-Prod | `s3://.../iam-account/prod/terraform.tfstate` |
 
 ---
 
-## 📂 State Management
+## ⚙️ What Gets Created
 
-This project uses **folder-based state separation** in S3:
+### For Each User
+- ✅ IAM user account
+- ✅ Random secure password (16 characters)
+- ✅ Login profile with forced password reset
+- ✅ Policy attachment (default: AdministratorAccess)
+- ✅ Password stored in SSM Parameter Store (encrypted)
 
-```
-s3://your-bucket/
-└── iam-account/
-    ├── dev/terraform.tfstate
-    ├── staging/terraform.tfstate
-    └── prod/terraform.tfstate
-```
-
-To use different environments, change the `key` in `backend.tf`:
-
-- Dev: `iam-account/dev/terraform.tfstate`
-- Staging: `iam-account/staging/terraform.tfstate`
-- Prod: `iam-account/prod/terraform.tfstate`
+### Account-Wide
+- ✅ Password policy (14+ chars, complexity requirements)
+- ✅ 90-day max password age
+- ✅ Password reuse prevention
 
 ---
 
 ## 🔐 Security Features
 
 1. **Random Passwords**: 16-character passwords with special characters
-2. **SSM Parameter Store**: Passwords stored as SecureString (encrypted)
+2. **SSM Parameter Store**: Passwords stored as SecureString (encrypted at rest)
 3. **Force Password Reset**: Users must change password on first login
 4. **Strong Password Policy**: Account-wide secure password requirements
-5. **S3 Encryption**: State files encrypted at rest
+5. **S3 Encryption**: State files encrypted at rest (AES256)
 6. **Public Access Block**: S3 bucket protected from public access
-7. **State Locking**: Prevents concurrent modifications
+7. **State Locking**: DynamoDB prevents concurrent modifications
+8. **Versioning**: S3 versioning enabled for state file recovery
+9. **Lifecycle Rules**: Old state versions automatically managed
 
 ---
 
-## 🧩 Module Usage
+## 📝 Customizing Environments
 
-The `iam_user` module is reusable. You can use it in other projects:
+Edit `config/<env>/terraform.tfvars` to customize each environment:
 
 ```hcl
-module "custom_users" {
-  source = "./modules/iam_user"
+# config/dev/terraform.tfvars
+environment = "dev"
 
-  user_names       = ["Alice", "Bob"]
-  admin_policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
+# Different users per environment
+user_names = ["John-Dev", "Mary-Dev"]
+
+# Can use different policies per environment
+admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+
+# Add more environment-specific settings
+# tags = { Environment = "dev", Team = "DevOps" }
 ```
 
 ---
 
-## 🔄 Updating Users
+## 🔄 Common Operations
 
-### Add a New User
+### Add a New User to Dev
 
-1. Edit `main.tf` and add the name to `user_names` list
-2. Run `terraform apply`
+1. Edit `config/dev/terraform.tfvars`:
+   ```hcl
+   user_names = ["John-Dev", "Mary-Dev", "David-Dev", "Alice-Dev"]
+   ```
+
+2. Apply changes:
+   ```bash
+   cd deployments/
+   terraform apply -var-file=../config/dev/terraform.tfvars
+   ```
 
 ### Remove a User
 
-1. Edit `main.tf` and remove the name from `user_names` list
+1. Remove from `config/<env>/terraform.tfvars`
 2. Run `terraform apply`
 
-**Note**: The module uses `force_destroy = true`, so users with resources can be deleted.
+**Note**: Module uses `force_destroy = true`, so users can be deleted even if they have resources.
+
+### Switch Environments
+
+```bash
+cd deployments/
+
+# From dev to staging
+terraform init -backend-config=../config/staging/backend.hcl -reconfigure
+terraform plan -var-file=../config/staging/terraform.tfvars
+```
+
+The `-reconfigure` flag tells Terraform to switch backends.
 
 ---
 
 ## 🧹 Cleanup
 
-To destroy all IAM users:
+### Destroy an Environment
 
 ```bash
-terraform destroy
+cd deployments/
+terraform destroy -var-file=../config/dev/terraform.tfvars
 ```
 
-To destroy the backend infrastructure (⚠️ dangerous):
+### Destroy Backend (⚠️ Dangerous)
+
+Only do this if decommissioning ALL environments:
 
 ```bash
 cd backend/
 terraform destroy
 ```
 
-**Warning**: Destroying the backend will delete all state files!
+**Warning**: This deletes all state files! Back up first.
 
 ---
 
@@ -243,24 +282,46 @@ terraform destroy
 ## 🐛 Troubleshooting
 
 ### Backend initialization fails
-- Ensure the S3 bucket and DynamoDB table exist
-- Check that bucket/table names in `backend.tf` match your backend outputs
+- Ensure S3 bucket and DynamoDB table exist (run `backend/` first)
+- Check bucket/table names in `config/<env>/backend.hcl` match backend outputs
 
 ### Access denied errors
-- Verify your AWS credentials have IAM permissions
+- Verify AWS credentials have IAM permissions
 - Check that your user can create IAM users, groups, and policies
 
-### Password retrieval fails
-- Ensure the user has been created (`terraform apply` successful)
-- Check SSM parameter exists: `aws ssm describe-parameters`
+### Wrong environment
+Always run from `deployments/` directory and verify backend config:
+```bash
+cat .terraform/terraform.tfstate | grep '"address"'
+```
+
+### State locking errors
+Someone else might be running Terraform. Wait for them to finish, or if stuck:
+```bash
+terraform force-unlock <LOCK_ID>
+```
 
 ---
 
-## 📚 References
+## 📚 Documentation
 
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
-- [Terraform S3 Backend](https://www.terraform.io/docs/language/settings/backends/s3.html)
+- `backend/README.md` - Backend bootstrap instructions
+- `deployments/README.md` - Deployment workflow guide
+- `config/README.md` - Environment configuration guide
+- `modules/iam_user/` - Module documentation
+
+---
+
+## 🎓 Best Practices
+
+1. **Always use environment variables**: `export ENV=dev` for consistency
+2. **Review plans before applying**: Always run `terraform plan` first
+3. **Use separate AWS accounts for prod**: Additional isolation
+4. **Require approvals for prod**: Add manual approval in CI/CD
+5. **Backup state files**: Especially the bootstrap backend state
+6. **Use meaningful user names**: Include environment suffix (e.g., John-Dev)
+7. **Rotate passwords regularly**: Consider AWS Secrets Manager for automation
+8. **Monitor IAM activity**: Enable CloudTrail for audit logs
 
 ---
 
