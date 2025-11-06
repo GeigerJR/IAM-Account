@@ -1,16 +1,2 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-
-  backend "local" {
-    path = "terraform.tfstate"
-  }
-}
-
-provider "aws" {
-  region  = var.aws_region
-}
+# Note: Provider and terraform configuration moved to main.tf
+# Backend configuration is in backend.tf
