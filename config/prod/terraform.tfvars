@@ -1,7 +1,5 @@
-# PROD Environment Configuration
 environment = "prod"
 
-# IAM Groups with their policies, roles, and users
 groups = {
   "Admins-Prod" = {
     policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
@@ -14,11 +12,4 @@ groups = {
     role       = "Power User"
     users      = ["David-Prod"]
   }
-
-  # Production might have additional groups with restricted access
-  # "ReadOnly-Prod" = {
-  #   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-  #   role       = "Auditor"
-  #   users      = ["Auditor-Prod"]
-  # }
 }

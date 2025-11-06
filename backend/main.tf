@@ -1,7 +1,3 @@
-# backend/main.tf
-# Bootstrap infrastructure for Terraform remote state
-# Run this once to create shared S3 bucket and DynamoDB table
-
 terraform {
   required_providers {
     aws = {
@@ -16,19 +12,16 @@ provider "aws" {
   region = var.region
 }
 
-# S3 bucket for Terraform remote state (shared across projects)
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket_name
 
   tags = {
     Name        = "TerraformStateBucket"
     Environment = var.environment
-    Purpose     = "Terraform Remote State Storage"
     ManagedBy   = "Terraform"
   }
 }
 
-# Enable versioning on the bucket (allows state file recovery)
 resource "aws_s3_bucket_versioning" "versioning" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -37,7 +30,6 @@ resource "aws_s3_bucket_versioning" "versioning" {
   }
 }
 
-# Enable server-side encryption by default
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -48,7 +40,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   }
 }
 
-# Block all public access to the bucket (security best practice)
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -58,7 +49,6 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
   restrict_public_buckets = true
 }
 
-# Lifecycle rule to manage old state file versions (cost optimization)
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -77,7 +67,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   }
 }
 
-# DynamoDB table for state locking (prevents concurrent modifications)
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table
   billing_mode = "PAY_PER_REQUEST"
@@ -95,7 +84,6 @@ resource "aws_dynamodb_table" "terraform_locks" {
   tags = {
     Name        = "TerraformLockTable"
     Environment = var.environment
-    Purpose     = "Terraform State Locking"
     ManagedBy   = "Terraform"
   }
 }

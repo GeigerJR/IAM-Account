@@ -1,5 +1,3 @@
-# Variables are provided via config/<env>/terraform.tfvars
-
 variable "groups" {
   description = "Map of IAM groups with their policies, roles, and users"
   type = map(object({
@@ -10,7 +8,7 @@ variable "groups" {
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Environment name"
   type        = string
   default     = "dev"
 }

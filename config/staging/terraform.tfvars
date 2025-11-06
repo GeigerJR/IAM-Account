@@ -1,7 +1,5 @@
-# STAGING Environment Configuration
 environment = "staging"
 
-# IAM Groups with their policies, roles, and users
 groups = {
   "Admins-Staging" = {
     policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
