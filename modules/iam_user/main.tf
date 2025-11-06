@@ -1,6 +1,6 @@
 resource "aws_iam_user" "user" {
   for_each = toset(var.user_names)
-  name     = each.value
+vscode-remote://codespaces%2Bideal-couscous-jjqx5x6gj96c5qr7/workspaces/IAM-Account/modules  name     = each.value
   force_destroy = true
   tags = {
     CreatedBy = "Terraform"

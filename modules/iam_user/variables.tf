@@ -1,5 +1,5 @@
 # IAM username to be created
-variable "user_name" {
+variable "user_names" {
   description = "List of IAM usernames to create"
   type        = list(string)
 }
