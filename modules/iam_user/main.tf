@@ -30,10 +30,10 @@ resource "aws_iam_user_group_membership" "group_membership" {
 
 # Generate random passwords for each user
 resource "random_password" "temp_password" {
-  for_each            = toset(var.user_names)
-  length              = 16
-  special             = true
-  override_characters = "!@#$%^&*()-_=+"
+  for_each        = toset(var.user_names)
+  length          = 16
+  special         = true
+  override_special = "!@#$%^&*()-_=+"
 }
 
 # Create login profiles with temporary passwords
@@ -54,5 +54,4 @@ resource "aws_ssm_parameter" "user_temp_password" {
     CreatedBy = "Terraform"
     Group     = var.group_name
   }
-}
 }
