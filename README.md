@@ -10,12 +10,14 @@ cd backend && terraform init && terraform apply && cd ..
 
 # 2. Deploy IAM users to dev
 cd deployments/dev
-export AWS_PROFILE=dev-admin
+export AWS_PROFILE=your-admin-profile
 terraform init
 terraform apply
 
 # 3. Get user passwords
-aws ssm get-parameter --name "/iam/dev/John-Dev/temp_password" --with-decryption --query "Parameter.Value" --output text
+aws ssm get-parameter --name "/iam/John-Dev/temp_password" --with-decryption --query "Parameter.Value" --output text
+
+# Note: Console access must be enabled manually via AWS CLI or Console
 ```
 
 ## Structure
