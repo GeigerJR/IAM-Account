@@ -16,6 +16,7 @@ provider "aws" {
 module "iam_users" {
   source = "../modules/iam_user"
 
+  group_name       = var.group_name
   user_names       = var.user_names
   admin_policy_arn = var.admin_policy_arn
 }

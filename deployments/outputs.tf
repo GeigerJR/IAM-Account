@@ -1,3 +1,8 @@
+output "iam_group_name" {
+  description = "Name of the IAM group"
+  value       = module.iam_users.group_name
+}
+
 output "iam_user_names" {
   description = "Names of all created IAM users"
   value       = module.iam_users.user_names
