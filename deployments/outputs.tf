@@ -1,11 +1,16 @@
-output "iam_group_name" {
-  description = "Name of the IAM group"
-  value       = module.iam_users.group_name
+output "iam_group_names" {
+  description = "Map of created IAM groups"
+  value       = module.iam_users.group_names
 }
 
 output "iam_user_names" {
   description = "Names of all created IAM users"
   value       = module.iam_users.user_names
+}
+
+output "iam_user_groups" {
+  description = "Map of users to their groups"
+  value       = module.iam_users.user_groups
 }
 
 output "iam_user_temp_passwords" {

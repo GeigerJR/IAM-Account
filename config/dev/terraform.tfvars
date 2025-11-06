@@ -1,18 +1,21 @@
 # DEV Environment Configuration
 environment = "dev"
 
-# IAM Group name for DEV
-group_name = "DevOps-Dev"
+# IAM Groups with their policies and users
+groups = {
+  "Admins-Dev" = {
+    policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+    users      = ["John-Dev", "Mary-Dev"]
+  }
 
-# IAM Users for DEV environment
-user_names = ["John-Dev", "Mary-Dev", "David-Dev"]
+  "PowerUsers-Dev" = {
+    policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+    users      = ["David-Dev"]
+  }
 
-# Admin policy to attach to the group
-admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-
-# You can add more dev-specific variables here
-# tags = {
-#   Environment = "dev"
-#   Team        = "DevOps"
-#   ManagedBy   = "Terraform"
-# }
+  # You can add more groups as needed:
+  # "ReadOnly-Dev" = {
+  #   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+  #   users      = ["Alice-Dev", "Bob-Dev"]
+  # }
+}

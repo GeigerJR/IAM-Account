@@ -1,19 +1,15 @@
 # STAGING Environment Configuration
 environment = "staging"
 
-# IAM Group name for STAGING
-group_name = "DevOps-Staging"
+# IAM Groups with their policies and users
+groups = {
+  "Admins-Staging" = {
+    policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+    users      = ["John-Staging"]
+  }
 
-# IAM Users for STAGING environment
-user_names = ["John-Staging", "Mary-Staging", "David-Staging"]
-
-# Admin policy to attach to the group
-admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-
-# Staging-specific settings
-# tags = {
-#   Environment = "staging"
-#   Team        = "DevOps"
-#   ManagedBy   = "Terraform"
-# }
-
+  "PowerUsers-Staging" = {
+    policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+    users      = ["Mary-Staging", "David-Staging"]
+  }
+}
