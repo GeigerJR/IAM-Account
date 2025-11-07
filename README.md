@@ -4,6 +4,7 @@ Terraform project for managing IAM users with group-based permissions across dev
 
 ## Table of Contents
 
+- [LocalStack Setup](#localstack-setup)
 - [Quick Start](#quick-start)
 - [Structure](#structure)
 - [Result](#result)
@@ -13,22 +14,36 @@ Terraform project for managing IAM users with group-based permissions across dev
 
 ---
 
+## LocalStack Setup
+
+This project uses LocalStack to save on AWS costs. Start LocalStack before running Terraform:
+
+```bash
+# Start LocalStack (Docker must be running)
+localstack start -d
+
+# Verify it's running
+localstack status
+```
+
+[↑ Back to top](#table-of-contents)
+
 ## Quick Start
 
 ```bash
 # 1. Setup backend (once)
-cd backend && terraform init && terraform apply && cd ..
+cd backend
+terraform init
+terraform apply
+cd ..
 
 # 2. Deploy IAM users to dev
 cd deployments/dev
-export AWS_PROFILE=your-admin-profile
 terraform init
 terraform apply
 
-# 3. Get user passwords
-aws ssm get-parameter --name "/iam/John-Dev/temp_password" --with-decryption --query "Parameter.Value" --output text
-
-# Note: Console access must be enabled manually via AWS CLI or Console
+# 3. Get user passwords (from LocalStack)
+aws --endpoint-url=http://localhost:4566 ssm get-parameter --name "/iam/John-Dev/temp_password" --with-decryption --query "Parameter.Value" --output text
 ```
 
 [↑ Back to top](#table-of-contents)
