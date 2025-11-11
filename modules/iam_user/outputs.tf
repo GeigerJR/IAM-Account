@@ -1,16 +1,15 @@
-output "user_name" {
-  description = "The name of the created IAM user"
-  value       = aws_iam_user.user.name
+output "groups_created" {
+  description = "List of IAM groups created"
+  value       = keys(var.groups)
 }
 
-output "access_key_id" {
-  description = "Access key ID for the IAM user"
-  value       = try(aws_iam_access_key.user_key.id, null)
-  sensitive   = true
-}
-
-output "secret_access_key" {
-  description = "Secret access key for the IAM user"
-  value       = try(aws_iam_access_key.user_key.secret, null)
-  sensitive   = true
+output "user_login_profiles" {
+  description = "Login profile details for each user"
+  value = {
+    for username, profile in aws_iam_user_login_profile.login_profile :
+    username => {
+      password_reset_required = profile.password_reset_required
+      user_name               = profile.user
+    }
+  }
 }

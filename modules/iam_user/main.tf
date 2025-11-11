@@ -1,37 +1,40 @@
+locals {
+  all_users = toset(flatten([
+    for group_name, group_data in var.groups : group_data.users
+  ]))
+}
+
 resource "aws_iam_user" "user" {
-  for_each = toset(var.user_names)
+  for_each      = local.all_users
+  name          = each.value
   force_destroy = true
+
   tags = {
     CreatedBy = "Terraform"
-    Role      = "DevOps Engineer"
+    Role      = join(", ", [for g, d in var.groups : g if contains(d.users, each.value)])
   }
 }
 
+
 resource "random_password" "temp_password" {
-  for_each = toset(var.user_names)
-  length           = 16
-  special          = true
-  override_characters = "!@#$%^&*()-_=+"
+  for_each = local.all_users
+  length   = 16
+  special  = true
 }
 
 resource "aws_iam_user_login_profile" "login_profile" {
-  for_each = toset(var.user_names)
+  for_each                = local.all_users
   user                    = aws_iam_user.user[each.key].name
-  password                = random_password.temp_password[each.key].result
   password_reset_required = true
 }
 
-resource "aws_iam_user_policy_attachment" "admin_policy" {
-  for_each   = toset(var.user_names)
-  user       = aws_iam_user.user[each.key].name
-  policy_arn = var.admin_policy_arn
-}
 
 resource "aws_ssm_parameter" "user_temp_password" {
-  for_each = toset(var.user_names)
+  for_each = local.all_users
   name     = "/iam/${each.value}/temp_password"
   type     = "SecureString"
   value    = random_password.temp_password[each.key].result
+
   tags = {
     CreatedBy = "Terraform"
   }

@@ -13,11 +13,18 @@ provider "aws" {
   region = "us-east-1"
 }
 
-
-
 module "iam_users" {
   source = "../../modules/iam_user"
 
-  user_names = ["John", "Mary", "David"]
-  admin_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  groups = {
+    "Admins" = {
+      policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+      users      = ["John", "Mary"]
+    }
+
+    "PowerUsers" = {
+      policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+      users      = ["David"]
+    }
+  }
 }
