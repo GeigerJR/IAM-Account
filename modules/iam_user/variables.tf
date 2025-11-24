@@ -1,4 +1,7 @@
-variable "user_name" {
-  description = "The name of the IAM user to create"
-  type        = string
+variable "groups" {
+  description = "Map of IAM groups with users and lists of policy ARNs"
+  type = map(object({
+    policy_arns = list(string)
+    users       = list(string)
+  }))
 }

@@ -1,29 +1,41 @@
-# Create IAM User
-resource "aws_iam_user" "this" {
-  name = var.user_name
+locals {
+  all_users = toset(flatten([
+    for group_name, group_data in var.groups : group_data.users
+  ]))
+}
+
+resource "aws_iam_user" "user" {
+  for_each      = local.all_users
+  name          = each.value
+  force_destroy = true
+
   tags = {
-    ManagedBy = "Terraform"
+    CreatedBy = "Terraform"
+    Role      = join(", ", [for g, d in var.groups : g if contains(d.users, each.value)])
   }
 }
 
-# Create IAM Group for Admins
-resource "aws_iam_group" "admins" {
-  name = "AdminGroup"
+
+resource "random_password" "temp_password" {
+  for_each = local.all_users
+  length   = 16
+  special  = true
 }
 
-# Attach the AdministratorAccess policy to the group
-resource "aws_iam_group_policy_attachment" "admin_policy" {
-  group      = aws_iam_group.admins.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_user_login_profile" "login_profile" {
+  for_each                = local.all_users
+  user                    = aws_iam_user.user[each.key].name
+  password_reset_required = true
 }
 
-# Add the user to the Admin group
-resource "aws_iam_user_group_membership" "membership" {
-  user   = aws_iam_user.this.name
-  groups = [aws_iam_group.admins.name]
-}
 
-# Optional: Create an access key for CLI/SDK usage
-resource "aws_iam_access_key" "user_key" {
-  user = aws_iam_user.this.name
+resource "aws_ssm_parameter" "user_temp_password" {
+  for_each = local.all_users
+  name     = "/iam/${each.value}/temp_password"
+  type     = "SecureString"
+  value    = random_password.temp_password[each.key].result
+
+  tags = {
+    CreatedBy = "Terraform"
+  }
 }
