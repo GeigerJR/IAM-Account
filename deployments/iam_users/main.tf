@@ -5,12 +5,11 @@ terraform {
       version = "~> 5.0"
     }
   }
-
   required_version = ">= 1.3.0"
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 
 module "iam_users" {
@@ -18,13 +17,16 @@ module "iam_users" {
 
   groups = {
     "Admins" = {
-      policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-      users      = ["John", "Mary"]
+      policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+      users       = ["John", "Mary"]
     }
 
     "PowerUsers" = {
-      policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
-      users      = ["David"]
+      policy_arns = [
+        "arn:aws:iam::aws:policy/PowerUserAccess",
+        "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      ]
+      users = ["David"]
     }
   }
 }

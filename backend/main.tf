@@ -44,10 +44,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 # 🚫 Block all public access
 resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.terraform_state.id
-  block_public_acls        = true
-  block_public_policy      = true
-  ignore_public_acls       = true
-  restrict_public_buckets  = true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 # ♻️ Lifecycle configuration to manage old versions and uploads
@@ -87,6 +87,6 @@ resource "aws_dynamodb_table" "terraform_locks" {
 
 # ⏱️ Enable point-in-time recovery for DynamoDB
 resource "aws_dynamodb_table_point_in_time_recovery" "pitr" {
-  table_name = aws_dynamodb_table.terraform_locks.name
+  table_name                     = aws_dynamodb_table.terraform_locks.name
   point_in_time_recovery_enabled = true
 }

@@ -1,7 +1,7 @@
 variable "groups" {
-  description = "Map of IAM groups, their users, and attached policies"
+  description = "Map of IAM groups with users and lists of policy ARNs"
   type = map(object({
-    policy_arn = string
-    users      = list(string)
+    policy_arns = list(string)
+    users       = list(string)
   }))
 }

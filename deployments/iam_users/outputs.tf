@@ -1,16 +1,10 @@
-output "iam_user_names" {
-  description = "Names of created IAM users"
-  value       = [for user in module.iam_users : user.user_name]
+output "created_users" {
+  description = "List of users created by the module"
+  value       = module.iam_users.user_names
 }
 
-output "iam_access_key_ids" {
-  description = "Access key IDs for created IAM users"
-  value       = { for user in module.iam_users : user.user_name => user.access_key_id }
-  sensitive   = true
-}
-
-output "iam_secret_access_keys" {
-  description = "Secret access keys for created IAM users"
-  value       = { for user in module.iam_users : user.user_name => user.secret_access_key }
+output "initial_passwords" {
+  description = "Temporary passwords for the new users"
+  value       = module.iam_users.user_passwords
   sensitive   = true
 }

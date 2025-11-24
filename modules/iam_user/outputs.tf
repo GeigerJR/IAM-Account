@@ -1,15 +1,13 @@
-output "groups_created" {
-  description = "List of IAM groups created"
-  value       = keys(var.groups)
+output "user_names" {
+  description = "List of IAM users created"
+  value       = [for user in aws_iam_user.user : user.name]
 }
 
-output "user_login_profiles" {
-  description = "Login profile details for each user"
+output "user_passwords" {
+  description = "Map of users to their temporary passwords (from SSM)"
   value = {
-    for username, profile in aws_iam_user_login_profile.login_profile :
-    username => {
-      password_reset_required = profile.password_reset_required
-      user_name               = profile.user
-    }
+    for user in aws_iam_user.user :
+    user.name => aws_ssm_parameter.user_temp_password[user.name].value
   }
+  sensitive = true
 }
